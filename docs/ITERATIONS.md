@@ -77,11 +77,20 @@ were fixable`.
 
 Correction: split grouped unary rules into one evaluation per environment for
 local-baseline scoring, preserving the same underlying constraints and universe.
-`python tools/probes/local_baseline_progress.py` passes; all 20 tests (including
-120 seeded independent exhaustive cases) pass. Four-case contrast now exercises
+`python tools/probes/local_baseline_progress.py` passes; the exact corrected
+`d691c12` archive has 18 tests, including 80 seeded integer-only exhaustive cases,
+and all pass. Four-case contrast now exercises
 greedy's real neighborhood search: both local baselines and fleet optimum perform
 the two required fixes at cost 2. This corrects the baseline fairly and does not
 inflate the claimed distinction. Greedy still has only a local stopping guarantee.
+
+Historical evidence attribution correction: the first final log at `1e25b9a`
+incorrectly attributed 20 tests and 120 cases to this round. The separate reviewer
+rebuilt the exact `d691c12` wheel and found 18/80. The two broader typed-oracle
+methods were added in final `1e25b9a`, where the parser regression brings the
+current suite to 21 tests and 120 cases. Root corrected this documentation only;
+the original mistaken log remains in Git history. This correction adds no review
+cycle or code guarantee and does not change the four genuine fail/pass pairs.
 
 ## Additional parser/copy boundary hardening and probe correction
 
