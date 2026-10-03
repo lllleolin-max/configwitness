@@ -2,8 +2,7 @@
 from pathlib import Path
 import sys
 import tempfile
-from configwitness import InputError
-from configwitness.model import read_json
+from configwitness import InputError, load
 
 
 def main():
@@ -15,7 +14,7 @@ def main():
         for raw in cases:
             p.write_text(raw, encoding="utf-8")
             try:
-                read_json(p)
+                load(p)
             except InputError:
                 pass
             else:
