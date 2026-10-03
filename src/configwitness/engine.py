@@ -24,7 +24,7 @@ def validate(problem):
 def trace(problem, env, field):
     if env not in problem.envs or field not in problem.fields:
         raise InputError("unknown trace environment/field")
-    _, envs = resolve(problem)
+    _, envs = resolve(problem, include_trace=True)
     events = envs[env]["trace"].get(field, [])
     return {"env": env, "field": field, "present": field in envs[env]["values"],
             "value": envs[env]["values"].get(field), "winner": events[-1] if events else None,

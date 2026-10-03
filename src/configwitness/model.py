@@ -100,19 +100,27 @@ class Problem:
         for l in self.layers.values():
             if any(p not in self.layers for p in l["parents"]):
                 fail(f"missing parent of {l['id']}")
-        seen, active = set(), set()
-        def visit(layer):
-            if layer in active:
-                fail(f"inheritance cycle at {layer}")
-            if layer in seen:
-                return
-            active.add(layer)
-            for p in self.layers[layer]["parents"]:
-                visit(p)
-            active.remove(layer)
-            seen.add(layer)
-        for l in self.layers:
-            visit(l)
+        # Iterative DFS preserves parent precedence but avoids input-order-dependent
+        # recursion failure on a perfectly legal deep acyclic graph.
+        seen, active, self.order = set(), set(), []
+        for root in self.layers:
+            if root in seen:
+                continue
+            stack = [(root, False)]
+            while stack:
+                layer, exiting = stack.pop()
+                if exiting:
+                    active.remove(layer)
+                    seen.add(layer)
+                    self.order.append(layer)
+                    continue
+                if layer in active:
+                    fail(f"inheritance cycle at {layer}")
+                if layer in seen:
+                    continue
+                active.add(layer)
+                stack.append((layer, True))
+                stack.extend((p, False) for p in reversed(self.layers[layer]["parents"]))
         seq(d["environments"], "environments", True)
         self.envs = {}
         for e in d["environments"]:

@@ -1,25 +1,30 @@
 """Shallow whole-field override; later parent wins, child wins last."""
 from copy import deepcopy
+from .model import InputError
 
 
-def resolve(problem):
+def resolve(problem, include_trace=False, max_trace_events=20_000):
     cache = {}
-    def layer(n):
-        if n in cache:
-            return cache[n]
+    event_count = 0
+    for n in problem.order:
         state, history = {}, {}
         for p in problem.layers[n]["parents"]:
-            ps, ph = layer(p)
-            for f, events in ph.items():
-                history.setdefault(f, []).extend(deepcopy(events))
+            ps, ph = cache[p]
+            if include_trace:
+                for f, events in ph.items():
+                    event_count += len(events)
+                    if event_count > max_trace_events:
+                        raise InputError(f"exact trace exceeds {max_trace_events} cached provider events; validate/search do not expand provenance")
+                    history.setdefault(f, []).extend(deepcopy(events))
             state.update(ps)
         for f, v in problem.layers[n]["overrides"].items():
             state[f] = v
-            history.setdefault(f, []).append({"layer": n, "value": deepcopy(v)})
+            if include_trace:
+                event_count += 1
+                if event_count > max_trace_events:
+                    raise InputError(f"exact trace exceeds {max_trace_events} cached provider events")
+                history.setdefault(f, []).append({"layer": n, "value": deepcopy(v)})
         cache[n] = (state, history)
-        return state, history
-    for n in problem.layers:
-        layer(n)
     layers = {}
     for n, (state, history) in cache.items():
         layers[n] = {"values": {f: deepcopy(v) for f, v in state.items() if type(v) is not dict},

@@ -17,8 +17,14 @@ cloud fleet optimizer. Conflict deletion requires up to roughly 2C+1 bounded
 searches for C predicates. Its shared max_states budget counts every candidate
 across all those searches, including removal witnesses.
 
-Inheritance resolution caches each layer snapshot, but a diamond duplicates
-provider histories along paths. Time and memory include that expanded trace.
+Inheritance resolution uses a validated iterative topological order and caches
+each layer snapshot. Current validation/search do not construct provider histories.
+An explicitly requested exact trace duplicates histories along diamond paths,
+but refuses more than 20,000 cached provider events with InputError (CLI exit 2).
+It never silently truncates the reported provider list. Time/memory for current
+resolution are O((L+E)F), where L/E/F count layers/parent edges/declared fields.
+Trace cost additionally includes those bounded cached events; constructing output
+copies can add a bounded factor proportional to environment references.
 Checker reconstruction trades this trace for repeated ready-layer scans.
 The SDK/CLI are synchronous and do not run user commands or contact networks.
 No wall-clock deadline is promised by a state budget; graph/input work per state

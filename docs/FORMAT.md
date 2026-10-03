@@ -18,7 +18,10 @@ declared fields to scalars or `{"$unset": true}`. Parent snapshots merge left to
 right, shallowly by whole field, then the child overrides. A later parent's
 inherited base value can override an earlier parent's own override. This is
 intentional ordered snapshot precedence, not C3 linearization or CUE unification.
-A diamond repeats provider events once per inheritance path. Missing parents
+A requested trace repeats provider events once per inheritance path, with a
+20,000 cached-event bound that rejects oversized traces explicitly. Validate and
+finite searches avoid trace expansion. Layer-list input order does not affect
+inheritance semantics. Missing parents
 and cycles reject. Explicit null is present; unset suppresses inherited values;
 absence has no provider. Required absent/unset fields make the current rollout
 invalid but may be fixable by a future assignment.

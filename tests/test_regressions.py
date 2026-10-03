@@ -15,3 +15,6 @@ def probe(name):
 class ReviewRegressions(unittest.TestCase):
     def test_input_boundary(self):
         probe("input_boundary")
+
+    def test_deep_inheritance(self):
+        probe("deep_inheritance")
