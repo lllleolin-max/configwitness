@@ -21,3 +21,6 @@ class ReviewRegressions(unittest.TestCase):
 
     def test_output_preservation(self):
         probe("output_preservation")
+
+    def test_local_baseline_progress(self):
+        probe("local_baseline_progress")

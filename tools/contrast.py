@@ -8,7 +8,7 @@ from configwitness.baselines import per_environment, greedy_local
 def main():
     root = Path(__file__).resolve().parents[1]
     rows = []
-    for file in ("failover.json", "already-good.json", "no-finite-repair.json"):
+    for file in ("failover.json", "already-good.json", "no-finite-repair.json", "local-repair-good.json"):
         p = load(root / "examples" / file)
         exact = repair(p)
         independent = per_environment(p)
@@ -24,6 +24,8 @@ def main():
     assert rows[0]["fleet_cost"] == 2 and not rows[0]["per_environment_fleet_valid"] and not rows[0]["greedy_fleet_valid"]
     assert rows[1]["fleet_valid"] and rows[1]["per_environment_fleet_valid"] and rows[1]["greedy_fleet_valid"]
     assert rows[2]["fleet_status"] == "UNSAT"
+    assert rows[3]["fleet_cost"] == rows[3]["per_environment_cost"] == rows[3]["greedy_cost"] == 2
+    assert rows[3]["fleet_valid"] and rows[3]["per_environment_fleet_valid"] and rows[3]["greedy_fleet_valid"]
     print(json.dumps({"synthetic": True, "incumbents_executed": False, "rows": rows}, indent=2))
 
 

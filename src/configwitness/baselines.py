@@ -5,7 +5,11 @@ from .constraints import violations
 
 
 def _local(problem):
-    return [c for c in problem.data["constraints"] if c["kind"] in ("range", "allowed")]
+    # A grouped unary rule is logically one predicate per environment. Counting
+    # it as one violation prevents a greedy single-target step making progress
+    # when two environments fail the same rule.
+    return [{**c, "envs": [e]} for c in problem.data["constraints"]
+            if c["kind"] in ("range", "allowed") for e in c["envs"]]
 
 
 def per_environment(problem, max_states=100_000):
