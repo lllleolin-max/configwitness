@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from .model import InputError, load
+from .model import InputError, load, read_json
 from .engine import validate, trace, solve, repair, conflict, apply_edits
 from .checker import check_proposal
 
@@ -46,7 +46,7 @@ def main(argv=None):
             else:
                 result["proposal_written"] = False
         else:
-            proposed = json.loads(Path(a.proposal).read_text(encoding="utf-8"))
+            proposed = read_json(a.proposal)
             result = check_proposal(p, proposed)
             if a.action == "apply" and result["accepted"]:
                 changed = apply_edits(p, proposed["edits"])

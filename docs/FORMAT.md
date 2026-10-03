@@ -1,6 +1,8 @@
 # Strict format v1
 
 All object keys are closed to unknown members. The top-level required keys are
+parsed with duplicate-key rejection at every nesting level; last-key-wins input
+is rejected before interpretation. Malformed identifiers produce `InputError`.
 `version`, `fields`, `layers`, `environments`, `constraints`, `edits`, `protected`.
 Optional `edit_scope` defaults to `leaf`; optional `description` is text.
 Identifiers are exact, case-sensitive, nonempty strings up to 128 characters,

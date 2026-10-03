@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import copy
 import json
-import math
 from pathlib import Path
 
 
@@ -89,10 +88,10 @@ class Problem:
                 fail(f"duplicate layer id: {l['id']}")
             self.layers[l["id"]] = l
             seq(l["parents"], "parents")
-            if len(set(l["parents"])) != len(l["parents"]):
-                fail("duplicate parent")
             for p in l["parents"]:
                 name(p, "parent")
+            if len(set(l["parents"])) != len(l["parents"]):
+                fail("duplicate parent")
             if type(l["overrides"]) is not dict:
                 fail("overrides: expected object")
             for f, v in l["overrides"].items():
@@ -119,6 +118,7 @@ class Problem:
         for e in d["environments"]:
             obj(e, "environment", ("id", "layer"))
             name(e["id"], "environment.id")
+            name(e["layer"], "environment.layer")
             if e["id"] in self.envs or e["layer"] not in self.layers:
                 fail("duplicate environment or unknown layer")
             self.envs[e["id"]] = e["layer"]
@@ -155,6 +155,8 @@ class Problem:
                 self.field(c["replicas"], "int")
                 self.field(c["region"], "string")
                 integer(c["min_backup"], "min_backup", 1)
+                name(c["primary"], "failover.primary")
+                name(c["backup"], "failover.backup")
                 if c["primary"] not in self.envs or c["backup"] not in self.envs or c["primary"] == c["backup"]:
                     fail("failover requires distinct known primary and backup")
             else:
@@ -165,6 +167,8 @@ class Problem:
             ids.add(c["id"])
             if "envs" in c:
                 seq(c["envs"], "constraint.envs", True)
+                for e in c["envs"]:
+                    name(e, "constraint.env")
                 if len(set(c["envs"])) != len(c["envs"]) or any(e not in self.envs for e in c["envs"]):
                     fail("constraint envs must be unique known identifiers")
         seq(d["edits"], "edits")
@@ -176,6 +180,7 @@ class Problem:
         for e in d["edits"]:
             obj(e, "edit", ("layer", "field", "options"))
             self.field(e["field"])
+            name(e["layer"], "edit.layer")
             if e["layer"] not in self.layers:
                 fail("unknown edit layer")
             if scope == "leaf" and (e["layer"] in parents or e["layer"] not in self.envs.values()):
@@ -209,6 +214,7 @@ class Problem:
                 fail("protected: expected env/field or layer/field")
             self.field(p["field"])
             k = "env" if "env" in p else "layer"
+            name(p[k], "protected target")
             if p[k] not in (self.envs if k == "env" else self.layers):
                 fail("unknown protected target")
             identity = (k, p[k], p["field"])
@@ -217,14 +223,30 @@ class Problem:
             protected.add(identity)
 
     def field(self, f, wanted=None):
+        name(f, "field reference")
         if f not in self.fields or (wanted is not None and self.fields[f]["type"] != wanted):
             fail(f"unknown field or wrong constraint type: {f}")
 
 
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            fail(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def read_json(path):
+    """Strict duplicate-key/nonfinite handling, shared by input and proposals."""
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"),
+                          parse_constant=lambda x: fail(f"nonfinite number: {x}"),
+                          object_pairs_hook=unique_object)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise InputError(str(exc)) from exc
+
+
 def load(path):
     """Read UTF-8 JSON. Parsing/schema errors are InputError."""
-    try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=lambda x: fail(f"nonfinite number: {x}"))
-        return Problem(data)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise InputError(str(exc)) from exc
+    return Problem(read_json(path))
