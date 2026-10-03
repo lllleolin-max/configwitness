@@ -1,8 +1,11 @@
 # ConfigWitness
 
-Review an inherited rollout as a fleet, trace the values that caused a failure,
-and propose edits to real override layers within a declared finite universe.
+Check whether inherited configuration values satisfy rules across a whole fleet,
+trace the values that caused a failure, and propose edits to real override layers
+within a declared finite set of allowed choices.
 The proposal is independently re-resolved and checked before it is materialized.
+
+中文：面向平台工程师，审查有继承／覆盖关系的多环境配置，解释具体值来自哪一层，并在明确列出的编辑选项中寻找可核验的修复。适合发布前的离线配置审查；需要 Kubernetes 清单导入、任意策略语言或自动部署时不适用。
 
 A standby can satisfy its own replica range while lacking enough capacity for
 its paired primary. A local validator will approve that configuration; the
@@ -12,31 +15,30 @@ not measured production costs or availability forecasts.
 
 ## Install and run / 安装与运行
 
-Python 3.11 or later. From this repository:
+Python 3.11 or later; standard-library runtime. Run from a clone of this repository with the intended Python environment active. For an isolated install, run `python -m venv .venv`, then `.venv\Scripts\Activate.ps1` in PowerShell or `source .venv/bin/activate` in Bash.
 
 ```sh
-python -m pip wheel . --no-deps --wheel-dir dist
-python -m pip install dist/configwitness-0.1.0-py3-none-any.whl
+python -m pip install .
 configwitness validate examples/failover.json
 configwitness trace examples/failover.json prod-west replicas
-configwitness solve examples/failover.json
 configwitness repair examples/failover.json --output proposal.json
 configwitness check examples/failover.json proposal.json
 configwitness apply examples/failover.json proposal.json --output rollout.repaired.json
 configwitness validate rollout.repaired.json
-python tools/workflow.py
-python tools/contrast.py
-python -m unittest discover -s tests -v
 ```
 
 Output filenames must be new; existing files are preserved and rejected.
+`pip install .` builds and installs a normal wheel. If the console command is not on PATH, use `python -m configwitness.cli` with the same arguments.
 `validate` initially returns exit 1 and `INVALID`: the declared fleet total is
 5 rather than 6 and standby replicas are 1 rather than the required 2.
 `trace` shows base=2, standby=1, winning provider `standby`.
-`solve` returns `SAT`; `repair` returns `OPTIMAL`, cost 2, one optimum after
+`repair` returns `OPTIMAL`, cost 2, one optimum after
 examining 9 assignments. The proposal sets `standby.replicas` to 2. The actual
-new input file validates as `VALID`. `tools/workflow.py` drives the installed
-console command and asserts this whole sequence using temporary files.
+new input file validates as `VALID`. The first exit 1 is the expected failure being investigated; run the subsequent commands separately rather than chaining them with `&&`.
+
+`proposal.json` contains source-layer edits for review; `rollout.repaired.json` is a new input in this project's [JSON format](docs/FORMAT.md). Adapt your own configuration into that format, declare constraints/protected values and finite editable options, then use the checked new file in your existing review/deployment process. `apply` writes local JSON; it does not contact your fleet.
+
+CLI output is JSON. Exit codes: `0` successful/check accepted; `1` current `INVALID`, finite `UNSAT`, or rejected proposal; `2` invocation/input/I/O error; `3` bounded-search `UNKNOWN`. Check both the exit code and action-specific status; `SAT` answers existence, while `VALID` describes the current configuration.
 
 中文：本工具面向审核多环境发布配置的平台工程师。它先检查当前发布是否满足
 副本总数、区域放置和主备配对等约束，随后追溯继承来源，再在明确列出的可编辑
@@ -103,6 +105,8 @@ is custom, with no CUE/Rego compatibility claim.
 See [format and subset](docs/FORMAT.md), [architecture](docs/ARCHITECTURE.md),
 [pilot rationale](docs/PILOT.md), [security](SECURITY.md),
 [contributing](CONTRIBUTING.md), and [review corrections](docs/ITERATIONS.md).
+
+Optional checks: `configwitness solve examples/failover.json` returns `SAT`; `python tools/workflow.py` drives the installed console command through the repair sequence in temporary files, including conflict and UNKNOWN cases. Run `python tools/contrast.py` for the synthetic comparison and `python -m unittest discover -s tests -v` for the test suite. To build a distributable wheel separately, use `python -m pip wheel . --no-deps --wheel-dir dist`.
 
 Actual customers, adoption, revenue and willingness to pay are unknown. Local
 tests and checked-in CI are evidence of this artifact, not production assurance.
