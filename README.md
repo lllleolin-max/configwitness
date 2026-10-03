@@ -30,6 +30,7 @@ python -m unittest discover -s tests -v
 ```
 
 `validate` initially returns exit 1 and `INVALID`: the declared fleet total is
+Output filenames must be new; existing files are preserved and rejected.
 5 rather than 6 and standby replicas are 1 rather than the required 2.
 `trace` shows base=2, standby=1, winning provider `standby`.
 `solve` returns `SAT`; `repair` returns `OPTIMAL`, cost 2, one optimum after

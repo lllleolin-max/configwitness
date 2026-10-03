@@ -81,3 +81,9 @@ CLI stdout is JSON. Exit 0: valid/SAT/optimal/trace/accepted; 1: invalid/UNSAT/r
 read its status before treating it as optimal. `apply` writes only an accepted
 proposal. Inputs must be trusted as configuration assumptions, not as guarantees
 that these finite predicates accurately describe an external system.
+
+Output uses exclusive creation. Existing paths, including source/proposal aliases,
+are rejected with exit 2 and preserved. Choose a fresh filename on each run.
+An interrupted write can leave an incomplete new output; rerun to a new filename
+and check the complete proposal. No transactional deployment or durable fsync
+guarantee is claimed.

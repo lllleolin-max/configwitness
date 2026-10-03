@@ -18,3 +18,6 @@ class ReviewRegressions(unittest.TestCase):
 
     def test_deep_inheritance(self):
         probe("deep_inheritance")
+
+    def test_output_preservation(self):
+        probe("output_preservation")

@@ -7,6 +7,16 @@ from .engine import validate, trace, solve, repair, conflict, apply_edits
 from .checker import check_proposal
 
 
+def write_new(path, value):
+    # Exclusive creation protects source input, proposal files and aliases without
+    # a racy exists-check followed by truncation. No implicit overwrite option.
+    try:
+        with Path(path).open("x", encoding="utf-8", newline="\n") as file:
+            file.write(json.dumps(value, indent=2) + "\n")
+    except FileExistsError as exc:
+        raise InputError("output already exists; choose a new path") from exc
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="configwitness")
     sub = parser.add_subparsers(dest="action", required=True)
@@ -41,7 +51,7 @@ def main(argv=None):
                 checked = check_proposal(p, result["repairs"][0])
                 if not checked["accepted"]:
                     raise InputError("internal repair rejected by independent checker")
-                Path(a.output).write_text(json.dumps(result["repairs"][0], indent=2) + "\n", encoding="utf-8")
+                write_new(a.output, result["repairs"][0])
                 result["proposal_written"] = True
             else:
                 result["proposal_written"] = False
@@ -50,7 +60,7 @@ def main(argv=None):
             result = check_proposal(p, proposed)
             if a.action == "apply" and result["accepted"]:
                 changed = apply_edits(p, proposed["edits"])
-                Path(a.output).write_text(json.dumps(changed.data, indent=2) + "\n", encoding="utf-8")
+                write_new(a.output, changed.data)
                 result["rollout_written"] = True
         print(json.dumps(result, sort_keys=True, indent=2))
         if result.get("status") == "UNKNOWN":
