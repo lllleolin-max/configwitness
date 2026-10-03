@@ -15,6 +15,13 @@ not measured production costs or availability forecasts.
 
 ## Install and run / 安装与运行
 
+With Git installed, start from a new checkout / 首次使用先克隆并进入目录：
+
+```console
+git clone https://github.com/lllleolin-max/configwitness.git
+cd configwitness
+```
+
 Python 3.11 or later; standard-library runtime. Run from a clone of this repository with the intended Python environment active. For an isolated install, run `python -m venv .venv`, then `.venv\Scripts\Activate.ps1` in PowerShell or `source .venv/bin/activate` in Bash.
 
 ```sh
