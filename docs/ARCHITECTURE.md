@@ -42,3 +42,6 @@ at construction and edit application. Do not mutate a Problem's attributes while
 using it; construct a new Problem for a new configuration. No concurrent mutation
 guarantee. Numeric values and costs use exact arbitrary-precision Python integers;
 there is no float/NaN handling in the supported field language.
+JSON text parsing still obeys the interpreter's configured decimal-digit and
+nesting limits; exceeded parser/copy limits are InputError, not a claim of fleet
+UNSAT. The SDK does not disable those interpreter protections.

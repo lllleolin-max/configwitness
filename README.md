@@ -29,8 +29,8 @@ python tools/contrast.py
 python -m unittest discover -s tests -v
 ```
 
-`validate` initially returns exit 1 and `INVALID`: the declared fleet total is
 Output filenames must be new; existing files are preserved and rejected.
+`validate` initially returns exit 1 and `INVALID`: the declared fleet total is
 5 rather than 6 and standby replicas are 1 rather than the required 2.
 `trace` shows base=2, standby=1, winning provider `standby`.
 `solve` returns `SAT`; `repair` returns `OPTIMAL`, cost 2, one optimum after
@@ -87,6 +87,7 @@ The output checks their proposed choices against the full original fleet:
 | legal local replicas, invalid failover | cost 2, valid | cost 0, invalid |
 | already good fleet | cost 0, valid | cost 0, valid |
 | finite universe cannot meet total | UNSAT | locally legal, fleet invalid |
+| two independent local replica fixes | cost 2, valid | cost 2, valid |
 
 This demonstrates the interaction of inherited provenance, actual layer edits,
 fleet predicates and protection-aware finite repair. It is not a benchmark

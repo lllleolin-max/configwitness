@@ -16,6 +16,8 @@ complete repair ties when available, and an independent materialization check.
 The executable contrast shows a local-only cost-zero choice fails the declared
 standby requirement, while the full model chooses cost 2 and passes. The good
 fixture shows no advantage, and the adverse fixture shows no finite solution.
+The fourth fixture requires two actual local fixes and both baselines match the
+full fleet optimum, illustrating another case with no distinctive benefit.
 These are constructed engineering examples, not customer incidents, time savings,
 avoided outage estimates or comparisons against an executed incumbent.
 

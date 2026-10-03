@@ -181,6 +181,59 @@ class SearchTests(unittest.TestCase):
                 for cid in c["constraints"]:
                     self.assertTrue(enumerate_feasible(d, [x for x in c["constraints"] if x != cid]))
 
+    def test_relational_typed_ancestor_edit_oracle(self):
+        rng = random.Random(614)
+        for case in range(40):
+            d = tiny()
+            d["edit_scope"] = "declared-layers"
+            d["fields"] = {"n": {"type": "int", "nullable": True},
+                           "region": {"type": "string", "nullable": True}, "tls": {"type": "bool"}}
+            d["layers"][0]["overrides"] = {"n": rng.randrange(3), "region": "east", "tls": True}
+            d["layers"][2]["overrides"] = {"region": rng.choice(["west", "east", None])}
+            d["edits"] = [
+                {"layer": "base", "field": "n", "options": [{"op": "set", "value": 2, "cost": 1}, {"op": "set", "value": 0, "cost": 0}, {"op": "unset", "cost": 0}]},
+                {"layer": "b", "field": "region", "options": [{"op": "set", "value": x, "cost": rng.randrange(3)} for x in ("west", "north", None)]},
+                {"layer": "a", "field": "tls", "options": [{"op": "set", "value": False, "cost": 0}, {"op": "remove", "cost": 0}]}
+            ]
+            d["constraints"] = [
+                {"id": "replicas", "kind": "range", "envs": ["a", "b"], "field": "n", "min": 0, "max": 3},
+                {"id": "budget", "kind": "sum", "envs": ["a", "b"], "field": "n", "max": rng.randrange(6)},
+                {"id": "regions", "kind": "distinct", "envs": ["a", "b"], "field": "region"},
+                {"id": "tls-equal", "kind": "equal", "envs": ["a", "b"], "field": "tls"},
+                {"id": "tls-domain", "kind": "allowed", "envs": ["a", "b"], "field": "tls", "values": [True]},
+                {"id": "pair", "kind": "failover", "primary": "a", "backup": "b", "replicas": "n", "region": "region", "min_backup": 2}
+            ]
+            if rng.randrange(2):
+                d["protected"] = [{"layer": "base", "field": "n"}]
+            p = Problem(d); expected = enumerate_feasible(d); got = repair(p, max_repairs=100)
+            self.assertEqual(got["status"], "OPTIMAL" if expected else "UNSAT", case)
+            if expected:
+                least = min(cost for cost, _ in expected)
+                self.assertEqual(got["cost"], least)
+                self.assertEqual({identity(r["edits"]) for r in got["repairs"]}, {identity(e) for cost, e in expected if cost == least})
+                self.assertTrue(all(check_proposal(p, r)["accepted"] for r in got["repairs"]))
+            else:
+                core = conflict(p)
+                self.assertTrue(core["minimal"])
+                self.assertFalse(enumerate_feasible(d, core["constraints"]))
+                for c in core["constraints"]:
+                    self.assertTrue(enumerate_feasible(d, [x for x in core["constraints"] if x != c]))
+
+    def test_protected_presence_null_and_checker_ancestor_rejection(self):
+        from configwitness.engine import fingerprint
+        d = tiny(); d["fields"]["n"].update(nullable=True, required=False)
+        d["layers"][0]["overrides"]["n"] = None
+        d["edits"] = [{"layer": "base", "field": "n", "options": [{"op": "unset", "cost": 0}]}]
+        d["edit_scope"] = "declared-layers"
+        d["protected"] = [{"layer": "base", "field": "n"}]
+        p = Problem(d)
+        forged = {"version": 1, "source_sha256": fingerprint(p), "cost": 0,
+                  "edits": [{"layer": "base", "field": "n", "op": "unset", "cost": 0}]}
+        self.assertFalse(check_proposal(p, forged)["accepted"])
+        r = repair(p)
+        self.assertEqual(r["tie_count"], 1)
+        self.assertEqual(r["repairs"][0]["edits"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
