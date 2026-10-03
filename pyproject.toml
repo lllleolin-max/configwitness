@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "configwitness"
+version = "0.1.0"
+description = "Inherited fleet rollout validation and finite repair evidence"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "ConfigWitness contributors"}]
+keywords = ["configuration", "rollout", "provenance", "repair", "fleet"]
+classifiers = ["Programming Language :: Python :: 3", "Operating System :: OS Independent"]
+
+[project.scripts]
+configwitness = "configwitness.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "description": "Synthetic caller assumptions: individually legal replicas fail standby capacity",
+  "fields": {"replicas": {"type": "int"}, "region": {"type": "string"}, "tls": {"type": "bool"}},
+  "layers": [
+    {"id": "base", "parents": [], "overrides": {"replicas": 2, "region": "east", "tls": true}},
+    {"id": "primary", "parents": ["base"], "overrides": {"replicas": 4}},
+    {"id": "standby", "parents": ["base"], "overrides": {"replicas": 1, "region": "west"}}
+  ],
+  "environments": [{"id": "prod-east", "layer": "primary"}, {"id": "prod-west", "layer": "standby"}],
+  "constraints": [
+    {"id": "local-replicas", "kind": "range", "envs": ["prod-east", "prod-west"], "field": "replicas", "min": 1, "max": 4},
+    {"id": "fleet-budget", "kind": "sum", "envs": ["prod-east", "prod-west"], "field": "replicas", "min": 6, "max": 6},
+    {"id": "placement", "kind": "distinct", "envs": ["prod-east", "prod-west"], "field": "region"},
+    {"id": "standby-capacity", "kind": "failover", "primary": "prod-east", "backup": "prod-west", "replicas": "replicas", "region": "region", "min_backup": 2}
+  ],
+  "edit_scope": "leaf",
+  "edits": [
+    {"layer": "primary", "field": "replicas", "options": [{"op": "set", "value": 2, "cost": 1}, {"op": "set", "value": 3, "cost": 1}]},
+    {"layer": "standby", "field": "replicas", "options": [{"op": "set", "value": 2, "cost": 2}, {"op": "set", "value": 3, "cost": 2}]}
+  ],
+  "protected": [{"layer": "base", "field": "tls"}, {"env": "prod-east", "field": "region"}, {"env": "prod-west", "field": "region"}]
+}

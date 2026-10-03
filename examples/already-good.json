@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "description": "Synthetic baseline-good case: independent local repair is sufficient",
+  "fields": {"replicas": {"type": "int"}, "region": {"type": "string"}},
+  "layers": [
+    {"id": "base", "parents": [], "overrides": {"replicas": 2, "region": "east"}},
+    {"id": "a", "parents": ["base"], "overrides": {}},
+    {"id": "b", "parents": ["base"], "overrides": {"region": "west"}}
+  ],
+  "environments": [{"id": "a", "layer": "a"}, {"id": "b", "layer": "b"}],
+  "constraints": [
+    {"id": "local", "kind": "range", "envs": ["a", "b"], "field": "replicas", "min": 1, "max": 3},
+    {"id": "total", "kind": "sum", "envs": ["a", "b"], "field": "replicas", "max": 4},
+    {"id": "standby", "kind": "failover", "primary": "a", "backup": "b", "replicas": "replicas", "region": "region", "min_backup": 2}
+  ],
+  "edits": [
+    {"layer": "a", "field": "replicas", "options": [{"op": "set", "value": 3, "cost": 1}]},
+    {"layer": "b", "field": "replicas", "options": [{"op": "set", "value": 3, "cost": 1}]}
+  ],
+  "protected": []
+}

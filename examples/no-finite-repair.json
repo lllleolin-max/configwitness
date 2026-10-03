@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Synthetic adverse case: finite domains cannot provide required replica total",
+  "fields": {"replicas": {"type": "int"}},
+  "layers": [{"id": "shared", "parents": [], "overrides": {"replicas": 1}}, {"id": "a", "parents": ["shared"], "overrides": {}}, {"id": "b", "parents": ["shared"], "overrides": {}}],
+  "environments": [{"id": "a", "layer": "a"}, {"id": "b", "layer": "b"}],
+  "constraints": [{"id": "local", "kind": "range", "envs": ["a", "b"], "field": "replicas", "min": 1, "max": 2}, {"id": "total-low", "kind": "sum", "envs": ["a", "b"], "field": "replicas", "min": 5}, {"id": "total-high", "kind": "sum", "envs": ["a", "b"], "field": "replicas", "max": 4}],
+  "edit_scope": "declared-layers",
+  "edits": [{"layer": "shared", "field": "replicas", "options": [{"op": "set", "value": 2, "cost": 1}]}],
+  "protected": []
+}
