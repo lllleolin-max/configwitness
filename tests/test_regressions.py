@@ -24,3 +24,6 @@ class ReviewRegressions(unittest.TestCase):
 
     def test_local_baseline_progress(self):
         probe("local_baseline_progress")
+
+    def test_parser_limits(self):
+        probe("parser_limits")

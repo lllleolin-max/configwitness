@@ -61,7 +61,10 @@ class Problem:
     """Validated snapshot; callers should create a new instance after editing."""
 
     def __init__(self, data):
-        self.data = copy.deepcopy(data)
+        try:
+            self.data = copy.deepcopy(data)
+        except RecursionError as exc:
+            raise InputError("input nesting exceeds runtime copy limit") from exc
         d = self.data
         obj(d, "document", ("version", "fields", "layers", "environments", "constraints", "edits", "protected"), ("edit_scope", "description"))
         if type(d["version"]) is not int or d["version"] != 1:
@@ -251,7 +254,7 @@ def read_json(path):
         return json.loads(Path(path).read_text(encoding="utf-8"),
                           parse_constant=lambda x: fail(f"nonfinite number: {x}"),
                           object_pairs_hook=unique_object)
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         raise InputError(str(exc)) from exc
 
 
