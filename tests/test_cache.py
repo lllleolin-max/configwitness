@@ -57,6 +57,38 @@ class CachedConflictTests(unittest.TestCase):
         self.assertTrue(all(value is engine._MISSING or value is None or type(value) is bytes for value in cache.entries))
         self.assertFalse(hasattr(problem, "cache"))
 
+    def test_accounted_byte_admission_boundary_and_transparent_fallback(self):
+        data = next(cases())
+        problem = cw.Problem(data)
+        initial = engine._ConflictCache(problem, 10000)
+        boundary = initial.bytes + initial.entry_bound
+        edits, _ = next(engine.candidates(problem))
+        for limit, admitted in ((boundary - 1, False), (boundary, True), (boundary + 1, True)):
+            with patch.object(engine, "_CACHE_MAX_BYTES", limit):
+                cache = engine._ConflictCache(problem, 10000)
+                mask = cache.mask(problem, problem.data["constraints"])
+                cache.satisfies(0, edits, mask)
+                self.assertEqual(cache.entries[0] is not engine._MISSING, admitted)
+                self.assertLessEqual(cache.bytes, limit)
+                self.assertEqual(cw.conflict(problem, 10000), Reference(data).conflict(10000))
+
+    def test_large_original_resolution_disables_cache_without_unknown_claim(self):
+        data = {"version": 1, "fields": {"text": {"type": "string"}},
+                "layers": [{"id": "root", "parents": [], "overrides": {"text": "x" * 2000}}] + [
+                    {"id": f"l{i}", "parents": ["root" if i == 0 else f"l{i-1}"], "overrides": {}} for i in range(600)],
+                "environments": [{"id": "prod", "layer": "l599"}], "constraints": [], "edits": [], "protected": []}
+        problem = cw.Problem(data)
+        original = deepcopy(problem.data)
+        cache = engine._ConflictCache(problem, 10000)
+        self.assertIsNone(cache.before)
+        self.assertIsNone(cache.index)
+        self.assertEqual(cache.entries, [])
+        self.assertEqual(cache.bytes, 0)
+        self.assertEqual(cw.conflict(problem, 10000), {"status": "SAT", "constraints": [], "minimal": False,
+                         "premises": {"source_sha256": engine.fingerprint(problem), "edit_scope": "leaf", "protected": [], "universe": [],
+                                      "fixed": "all schema, inheritance, unedited overrides and protection snapshots"}, "states": 1})
+        self.assertEqual(problem.data, original)
+
 
 if __name__ == "__main__":
     unittest.main()

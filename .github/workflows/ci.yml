@@ -14,8 +14,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip wheel . --no-deps --wheel-dir dist
-      - run: python -m pip install dist/configwitness-0.1.0-py3-none-any.whl
+      - run: python -c "import glob,subprocess,sys; wheels=glob.glob('dist/configwitness-*.whl'); assert len(wheels)==1; subprocess.check_call([sys.executable,'-m','pip','install','--no-deps',wheels[0]])"
       - run: python -c "import configwitness; assert 'site-packages' in configwitness.__file__; print(configwitness.__file__)"
       - run: python -m unittest discover -s tests -v
       - run: python tools/workflow.py
       - run: python tools/contrast.py
+      - run: python tools/cache_work.py --output .local/cache-work --assert-reuse
