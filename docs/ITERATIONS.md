@@ -1,5 +1,10 @@
 # Actual self-review corrections
 
+This document preserves the original 0.1 correction history. The separate
+[0.2 update record](UPDATE_0_2_0.md) records the new bounded-reuse implementation,
+boundary/oracle review and installed delivery stages; those stages are not
+presented as three new correctness defects. The original failures remain in Git.
+
 Authoring/review date: 2026-10-03. Builder: GPT-6.1-Sol / Ultra. These are builder
 self-reviews, not independent portfolio scores. Each defect was found and its
 probe failed after the initially complete implementation had been committed.

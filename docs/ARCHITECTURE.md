@@ -17,6 +17,16 @@ cloud fleet optimizer. Conflict deletion requires up to roughly 2C+1 bounded
 searches for C predicates. Its shared max_states budget counts every candidate
 across all those searches, including removal witnesses.
 
+Version 0.2 adds bounded, call-local reuse across those conflict searches. It
+uses candidate ordinals and the identities of the original predicates, storing
+schema/protection rejection or a vector of all original predicate failures.
+Subset queries test the vector while still charging each logical candidate
+visit. The cache does not hold edited inputs or candidate resolutions; it
+retains one original resolution and a bounded predicate index. Slots/byte
+admission failure falls back to the original evaluation path. Public direct
+search, solve, repair and the local baselines stay uncached. See
+[CACHE](CACHE.md) for precise memory scope and complexity tradeoffs.
+
 Inheritance resolution uses a validated iterative topological order and caches
 each layer snapshot. Current validation/search do not construct provider histories.
 An explicitly requested exact trace duplicates histories along diamond paths,

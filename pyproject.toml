@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "configwitness"
-version = "0.2.0.dev2"
+version = "0.2.0"
 description = "Inherited fleet rollout validation and finite repair evidence"
 readme = "README.md"
 requires-python = ">=3.11"

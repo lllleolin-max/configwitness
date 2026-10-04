@@ -84,6 +84,16 @@ subset if those premises alone cannot produce concrete required fields.
 It does not find the smallest-cardinality conflict. Exhausted conflict work
 returns `UNKNOWN` with `minimal=false`, and does not publish a partial core.
 
+Version 0.2 reuses candidate evaluation inside a single conflict call. The lazy
+cache retains at most 4,096 candidate entries within a 1 MiB conservative
+object-accounting budget; full caches fall back to ordinary evaluation. Every
+visit still consumes the same shared `max_states`, so statuses, cores, removal
+witnesses, proposals and tie order retain their existing meanings. The schema,
+source protections and independent checker still apply. This can help repeated
+subset searches; small first-witness cases and oversized snapshots can be slower.
+See [cache mechanics and limits](docs/CACHE.md) and the
+[measured update record](docs/UPDATE_0_2_0.md) for adverse cases and reproduction.
+
 ## Demonstrated distinction and boundaries
 
 `tools/contrast.py` runs local-only minimum-cost repair and single-target greedy
